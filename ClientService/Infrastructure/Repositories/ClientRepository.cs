@@ -1,29 +1,27 @@
 using Application.Interfaces;
 using Domain.Entities;
-
+using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 namespace Infrastructure.Repositories;
 public class ClientRepository : IClientRepository
 {
-    private readonly List<Client> _clients = new();
-
-    public Task<Client?> GetByIdAsync(Guid id) =>
-        Task.FromResult(_clients.SingleOrDefault(c => c.Id == id));
-
-    public Task<IEnumerable<Client>> GetAllAsync() =>
-        Task.FromResult(_clients.AsEnumerable());
-
-    public Task AddAsync(Client client)
-    {
-        _clients.Add(client);
-        return Task.CompletedTask;
-    }
-
-    public Task UpdateAsync(Client client)
-    {
-        var index = _clients.FindIndex(c => c.Id == client.Id);
-        if (index >= 0)
-            _clients[index] = client;
-
-        return Task.CompletedTask;
-    }
+ private readonly ApplicationDbContext _context;
+ public ClientRepository(ApplicationDbContext context)
+ {
+ _context = context;
+ }
+ public async Task<Client?> GetByIdAsync(Guid id) =>
+ await _context.Clients.FindAsync(id);
+ public async Task<IEnumerable<Client>> GetAllAsync() =>
+ await _context.Clients.ToListAsync();
+ public async Task AddAsync(Client client)
+ {
+ await _context.Clients.AddAsync(client);
+ await _context.SaveChangesAsync();
+ }
+ public async Task UpdateAsync(Client client)
+ {
+ _context.Clients.Update(client);
+ await _context.SaveChangesAsync();
+ }
 }
